@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Pacientes - Sistema Blockchain</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <style>
+        /* Seu CSS permanece igual - muito bom! */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4b6cb7;
+            box-shadow: 0 0 0 2px rgba(75, 108, 183, 0.2);
+        }
+
+        button {
+            background: #4b6cb7;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #3a5999;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #4b6cb7;
+        }
+
+        .patient-info {
+            margin-bottom: 10px;
+        }
+
+        .patient-info strong {
+            color: #2c3e50;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .debug {
+            font-family: monospace;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .debug-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .connected {
+            background: #28a745;
+        }
+
+        .disconnected {
+            background: #dc3545;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Cadastro de Pacientes</h1>
+        <p class="subtitle">Sistema baseado em Blockchain - Ganache</p>
+    </header>
+
+    <div class="connection-status">
+        <div id="statusDot" class="status-dot disconnected"></div>
+        <span id="connectionText">Desconectado da Blockchain</span>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Novo Paciente</h2>
+            <form id="patientForm">
+                <div class="form-group">
+                    <label for="nome">Nome completo</label>
+                    <input type="text" id="nome" placeholder="Digite o nome completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="cpf">CPF</label>
+                    <input type="text" id="cpf" placeholder="Apenas números (ex: 12345678900)" required
+                        pattern="[0-9]{11}" title="Digite exatamente 11 dígitos numéricos">
+                </div>
+                <div class="form-group">
+                    <label for="idade">Idade</label>
+                    <input type="number" id="idade" placeholder="Idade" min="13" required>
+                </div>
+                <div class="form-group">
+                    <label for="endereco">Endereço (opcional)</label>
+                    <input type="text" id="endereco" placeholder="Endereço completo">
+                </div>
+                <button type="submit">Cadastrar Paciente</button>
+            </form>
+            <div id="cadastroStatus"></div>
+        </div>
+
+        <div class="card">
+            <h2>Consultar por CPF</h2>
+            <div class="form-group">
+                <label for="consultaCpf">Digite o CPF para consulta</label>
+                <input type="text" id="consultaCpf" placeholder="Apenas números (ex: 12345678900)" pattern="[0-9]{11}"
+                    title="Digite exatamente 11 dígitos numéricos">
+            </div>
+            <button onclick="consultarPaciente()">Consultar Paciente</button>
+
+            <div id="resultado">
+                <p>Informações do paciente aparecerão aqui.</p>
+            </div>
+
+            <div class="debug">
+                <div class="debug-title">Informações de Debug:</div>
+                <div id="debugInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let web3;
+        let contract;
+        const contractAddress = "0xE17732F0392Bf28d40FBD82d87694255fb888f07";
+
+        // ABI CORRIGIDA - Compatível com o contrato original que enviei
+        const contractABI = [
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "string",
+                        "name": "cpf",
+                        "type": "string"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "enderecoExistente",
+                        "type": "address"
+                    }
+                ],
+                "name": "CPFJaCadastrado",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": true,
+                        "internalType": "address",
+                        "name": "endereco",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "string",
+                        "name": "cpf",
+                        "type": "string"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "string",
+                        "name": "nome",
+                        "type": "string"
+                    }
+                ],
+                "name": "PacienteCadastrado",
+                "type": "event"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "name": "cpfCadastrado",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "name": "cpfParaEndereco",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "enderecosCadastrados",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "name": "pacientes",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "nome",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "cpf",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "idade",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "endereco",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_nome",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "_cpf",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_idade",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "_endereco",
+                        "type": "string"
+                    }
+                ],
+                "name": "adicionarPaciente",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_cpf",
+                        "type": "string"
+                    }
+                ],
+                "name": "consultarPorCPF",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_endereco",
+                        "type": "address"
+                    }
+                ],
+                "name": "consultarPorEndereco",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getTotalPacientes",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "index",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "getEnderecoPorIndice",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_cpf",
+                        "type": "string"
+                    }
+                ],
+                "name": "verificarCPFCadastrado",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_cpf",
+                        "type": "string"
+                    }
+                ],
+                "name": "getEnderecoPorCPF",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        // Função para atualizar o status de conexão
+        function updateConnectionStatus(connected) {
+            const statusDot = document.getElementById('statusDot');
+            const connectionText = document.getElementById('connectionText');
+
+            if (connected) {
+                statusDot.className = 'status-dot connected';
+                connectionText.textContent = 'Conectado à Blockchain';
+            } else {
+                statusDot.className = 'status-dot disconnected';
+                connectionText.textContent = 'Desconectado da Blockchain';
+            }
+        }
+
+        // Função para exibir informações de debug
+        function showDebugInfo(info) {
+            const debugElement = document.getElementById('debugInfo');
+            debugElement.innerHTML = info;
+        }
+
+        // Função para validar CPF
+        function validarCPF(cpf) {
+            return /^\d{11}$/.test(cpf);
+        }
+
+        window.addEventListener('load', async () => {
+            try {
+                // Conectar ao Ganache
+                web3 = new Web3('http://127.0.0.1:7545');
+
+                // Verificar conexão
+                const isConnected = await web3.eth.net.isListening();
+                console.log("Conectado ao Ganache:", isConnected);
+                updateConnectionStatus(isConnected);
+
+                // Inicializar contrato
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+
+                // Obter total de cadastrados para teste
+                const total = await contract.methods.getTotalPacientes().call();
+                showDebugInfo(`Contrato conectado. Total de pacientes cadastrados: ${total}`);
+
+            } catch (error) {
+                console.error("Erro ao conectar:", error);
+                updateConnectionStatus(false);
+                showDebugInfo(`Erro na conexão: ${error.message}`);
+            }
+        });
+
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Obter valores dos inputs
+            const nome = document.getElementById('nome').value;
+            const cpf = document.getElementById('cpf').value;
+            const idade = parseInt(document.getElementById('idade').value);
+            const endereco = document.getElementById('endereco').value;
+
+            const statusElement = document.getElementById('cadastroStatus');
+
+            // Validar CPF
+            if (!validarCPF(cpf)) {
+                statusElement.innerHTML = '<div class="status error">CPF deve conter exatamente 11 dígitos numéricos</div>';
+                return;
+            }
+
+            try {
+                statusElement.innerHTML = '<div class="status">Enviando transação... <span class="loading"></span></div>';
+
+                const accounts = await web3.eth.getAccounts();
+
+                // CORREÇÃO: Usar o nome correto da função - adicionarPaciente
+                await contract.methods.adicionarPaciente(nome, cpf, idade, endereco)
+                    .send({
+                        from: accounts[0],
+                        gas: 300000
+                    });
+
+                statusElement.innerHTML = '<div class="status success">Paciente cadastrado com sucesso!</div>';
+
+                // Limpar formulário
+                document.getElementById('patientForm').reset();
+
+            } catch (error) {
+                console.error("Erro no cadastro:", error);
+                let errorMsg = "Erro ao cadastrar paciente";
+
+                if (error.message.includes("CPF ja cadastrado")) {
+                    errorMsg = "Este CPF já está cadastrado no sistema";
+                } else if (error.message.includes("Idade deve ser maior que 12")) {
+                    errorMsg = "A idade deve ser maior que 12 anos";
+                } else if (error.message.includes("Endereço ja possui um paciente")) {
+                    errorMsg = "Esta conta já possui um paciente cadastrado";
+                }
+
+                statusElement.innerHTML = `<div class="status error">${errorMsg}</div>`;
+            }
+        });
+
+        async function consultarPaciente() {
+            const resultadoElement = document.getElementById('resultado');
+            const cpfInput = document.getElementById('consultaCpf');
+            const cpf = cpfInput.value;
+
+            // Validar CPF
+            if (!validarCPF(cpf)) {
+                resultadoElement.innerHTML = '<div class="status error">CPF deve conter exatamente 11 dígitos numéricos</div>';
+                return;
+            }
+
+            try {
+                resultadoElement.innerHTML = '<div class="status">Consultando... <span class="loading"></span></div>';
+                showDebugInfo(`Consultando CPF: ${cpf}`);
+
+                // Obter contas disponíveis
+                const accounts = await web3.eth.getAccounts();
+
+                // CORREÇÃO: A função retorna um array, não um objeto
+                const result = await contract.methods.consultarPorCPF(cpf).call({
+                    from: accounts[0]
+                });
+
+                console.log("Resultado completo da consulta:", result);
+
+                // Verificar se o paciente foi encontrado (result é um array)
+                if (result[0] === "" && result[2] == 0) {
+                    resultadoElement.innerHTML = '<div class="status error">Paciente não encontrado!</div>';
+                    showDebugInfo(`Paciente com CPF ${cpf} não encontrado.`);
+                } else {
+                    // CORREÇÃO: Acessar pelos índices do array
+                    const nome = result[0];
+                    const cpfRetornado = result[1];
+                    const idade = result[2];
+                    const endereco = result[3];
+                    const conta = result[4];
+
+                    // Exibir resultados
+                    resultadoElement.innerHTML = `
+                        <div class="patient-info"><strong>Nome:</strong> ${nome}</div>
+                        <div class="patient-info"><strong>CPF:</strong> ${cpfRetornado}</div>
+                        <div class="patient-info"><strong>Idade:</strong> ${idade}</div>
+                        <div class="patient-info"><strong>Endereço:</strong> ${endereco || 'Não informado'}</div>
+                        <div class="patient-info"><strong>Conta Blockchain:</strong> ${conta}</div>
+                    `;
+                    showDebugInfo(`Consulta bem-sucedida para CPF: ${cpf}`);
+                }
+
+            } catch (error) {
+                console.error("Erro na consulta:", error);
+                if (error.message.includes("revert") ||
+                    error.message.includes("Paciente nao encontrado") ||
+                    error.message.includes("invalid opcode")) {
+                    resultadoElement.innerHTML = '<div class="status error">Paciente não encontrado!</div>';
+                    showDebugInfo(`Paciente com CPF ${cpf} não encontrado.`);
+                } else {
+                    resultadoElement.innerHTML = '<div class="status error">Erro ao consultar paciente. Verifique a conexão com a blockchain.</div>';
+                    showDebugInfo(`Erro na consulta: ${error.message}`);
+                }
+            }
+        }
+
+        // Função adicional para verificar se um CPF está cadastrado
+        async function verificarCPF() {
+            const cpf = document.getElementById('consultaCpf').value;
+            if (!validarCPF(cpf)) return;
+
+            try {
+                const existe = await contract.methods.verificarCPFCadastrado(cpf).call();
+                showDebugInfo(`CPF ${cpf} está ${existe ? 'CADASTRADO' : 'NÃO cadastrado'} no sistema`);
+            } catch (error) {
+                console.error("Erro na verificação:", error);
+            }
+        }
+    </script>
+</body>
+
+</html>
