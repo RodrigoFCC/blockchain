@@ -7,7 +7,6 @@
     <title>Cadastro de Pacientes - Sistema Blockchain</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
     <style>
-        /* Seu CSS permanece igual - muito bom! */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -267,7 +266,6 @@
         let contract;
         const contractAddress = "0xE17732F0392Bf28d40FBD82d87694255fb888f07";
 
-        // ABI CORRIGIDA - Compatível com o contrato original que enviei
         const contractABI = [
             {
                 "anonymous": false,
@@ -591,31 +589,25 @@
             }
         }
 
-        // Função para exibir informações de debug
         function showDebugInfo(info) {
             const debugElement = document.getElementById('debugInfo');
             debugElement.innerHTML = info;
         }
 
-        // Função para validar CPF
         function validarCPF(cpf) {
             return /^\d{11}$/.test(cpf);
         }
 
         window.addEventListener('load', async () => {
             try {
-                // Conectar ao Ganache
                 web3 = new Web3('http://127.0.0.1:7545');
 
-                // Verificar conexão
                 const isConnected = await web3.eth.net.isListening();
                 console.log("Conectado ao Ganache:", isConnected);
                 updateConnectionStatus(isConnected);
 
-                // Inicializar contrato
                 contract = new web3.eth.Contract(contractABI, contractAddress);
 
-                // Obter total de cadastrados para teste
                 const total = await contract.methods.getTotalPacientes().call();
                 showDebugInfo(`Contrato conectado. Total de pacientes cadastrados: ${total}`);
 
@@ -629,7 +621,6 @@
         document.getElementById('patientForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Obter valores dos inputs
             const nome = document.getElementById('nome').value;
             const cpf = document.getElementById('cpf').value;
             const idade = parseInt(document.getElementById('idade').value);
@@ -637,7 +628,6 @@
 
             const statusElement = document.getElementById('cadastroStatus');
 
-            // Validar CPF
             if (!validarCPF(cpf)) {
                 statusElement.innerHTML = '<div class="status error">CPF deve conter exatamente 11 dígitos numéricos</div>';
                 return;
@@ -648,7 +638,6 @@
 
                 const accounts = await web3.eth.getAccounts();
 
-                // CORREÇÃO: Usar o nome correto da função - adicionarPaciente
                 await contract.methods.adicionarPaciente(nome, cpf, idade, endereco)
                     .send({
                         from: accounts[0],
@@ -657,7 +646,6 @@
 
                 statusElement.innerHTML = '<div class="status success">Paciente cadastrado com sucesso!</div>';
 
-                // Limpar formulário
                 document.getElementById('patientForm').reset();
 
             } catch (error) {
@@ -681,7 +669,6 @@
             const cpfInput = document.getElementById('consultaCpf');
             const cpf = cpfInput.value;
 
-            // Validar CPF
             if (!validarCPF(cpf)) {
                 resultadoElement.innerHTML = '<div class="status error">CPF deve conter exatamente 11 dígitos numéricos</div>';
                 return;
@@ -691,29 +678,24 @@
                 resultadoElement.innerHTML = '<div class="status">Consultando... <span class="loading"></span></div>';
                 showDebugInfo(`Consultando CPF: ${cpf}`);
 
-                // Obter contas disponíveis
                 const accounts = await web3.eth.getAccounts();
 
-                // CORREÇÃO: A função retorna um array, não um objeto
                 const result = await contract.methods.consultarPorCPF(cpf).call({
                     from: accounts[0]
                 });
 
                 console.log("Resultado completo da consulta:", result);
 
-                // Verificar se o paciente foi encontrado (result é um array)
                 if (result[0] === "" && result[2] == 0) {
                     resultadoElement.innerHTML = '<div class="status error">Paciente não encontrado!</div>';
                     showDebugInfo(`Paciente com CPF ${cpf} não encontrado.`);
                 } else {
-                    // CORREÇÃO: Acessar pelos índices do array
                     const nome = result[0];
                     const cpfRetornado = result[1];
                     const idade = result[2];
                     const endereco = result[3];
                     const conta = result[4];
 
-                    // Exibir resultados
                     resultadoElement.innerHTML = `
                         <div class="patient-info"><strong>Nome:</strong> ${nome}</div>
                         <div class="patient-info"><strong>CPF:</strong> ${cpfRetornado}</div>
@@ -738,7 +720,6 @@
             }
         }
 
-        // Função adicional para verificar se um CPF está cadastrado
         async function verificarCPF() {
             const cpf = document.getElementById('consultaCpf').value;
             if (!validarCPF(cpf)) return;
