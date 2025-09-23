@@ -417,18 +417,6 @@
                 resultadoElement.innerHTML = `<div class="status error">${errorMsg}</div>`;
             }
         }
-
-        async function verificarCPF() {
-            const cpf = document.getElementById('consultaCpf').value;
-            if (!validarCPF(cpf)) return;
-
-            try {
-                const existe = await contract.methods.verificarCPFCadastrado(cpf).call();
-                showDebugInfo(`CPF ${cpf} está ${existe ? 'CADASTRADO' : 'NÃO cadastrado'} no sistema`);
-            } catch (error) {
-                console.error("Erro na verificação:", error);
-            }
-        }
     </script>
 </body>
 

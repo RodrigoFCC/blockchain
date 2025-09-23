@@ -9,9 +9,9 @@ contract ContratoPaciente {
         string endereco;
     }
 
-    mapping (address => Paciente) public pacientes; // Paciente por endereço
-    mapping (string => address) public cpfParaEndereco; // CPF para endereço (controle de unicidade)
-    mapping (string => bool) public cpfCadastrado; // Verificação rápida se CPF existe
+    mapping (address => Paciente) public pacientes; 
+    mapping (string => address) public cpfParaEndereco; 
+    mapping (string => bool) public cpfCadastrado; 
     
     address[] public enderecosCadastrados;
 
@@ -45,7 +45,6 @@ contract ContratoPaciente {
 
         require(_ehPacienteValido(paciente), "Dados do paciente invalidos");
 
-        // Cadastra o paciente
         pacientes[msg.sender] = paciente;
         cpfParaEndereco[_cpf] = msg.sender;
         cpfCadastrado[_cpf] = true;
@@ -65,23 +64,5 @@ contract ContratoPaciente {
         require(bytes(pacientes[_endereco].cpf).length != 0, "Paciente nao encontrado para este endereco");
         Paciente memory p = pacientes[_endereco];
         return (p.nome, p.cpf, p.idade, p.endereco);
-    }
-
-    function getTotalPacientes() public view returns (uint) {
-        return enderecosCadastrados.length;
-    }
-
-    function getEnderecoPorIndice(uint index) public view returns (address) {
-        require(index < enderecosCadastrados.length, "Indice invalido");
-        return enderecosCadastrados[index];
-    }
-
-    function verificarCPFCadastrado(string memory _cpf) public view returns (bool) {
-        return cpfCadastrado[_cpf];
-    }
-
-    function getEnderecoPorCPF(string memory _cpf) public view returns (address) {
-        require(cpfCadastrado[_cpf], "CPF nao cadastrado");
-        return cpfParaEndereco[_cpf];
     }
 }
