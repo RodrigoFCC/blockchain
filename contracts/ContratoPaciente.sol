@@ -9,15 +9,12 @@ contract ContratoPaciente {
         string endereco;
     }
 
-    // Mapeamentos principais
     mapping (address => Paciente) public pacientes; // Paciente por endereço
     mapping (string => address) public cpfParaEndereco; // CPF para endereço (controle de unicidade)
     mapping (string => bool) public cpfCadastrado; // Verificação rápida se CPF existe
     
-    // Array para listar todos os endereços com pacientes
     address[] public enderecosCadastrados;
 
-    // Eventos para acompanhamento
     event PacienteCadastrado(address indexed endereco, string cpf, string nome);
     event CPFJaCadastrado(string cpf, address enderecoExistente);
 
@@ -38,7 +35,6 @@ contract ContratoPaciente {
     }
 
     function adicionarPaciente(string memory _nome, string memory _cpf, uint _idade, string memory _endereco) public {
-        // Verifica se o CPF já está cadastrado
         require(!cpfCadastrado[_cpf], "CPF ja cadastrado para outro paciente");
 
         Paciente memory paciente;

@@ -1,4 +1,4 @@
-const Pacientes = artifacts.require("Pacientes");
+const ContratoPaciente = artifacts.require("ContratoPaciente");
 module.exports = function(deployer) {
-  deployer.deploy(Pacientes);
+  deployer.deploy(ContratoPaciente);
 };
